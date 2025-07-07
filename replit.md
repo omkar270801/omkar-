@@ -114,6 +114,7 @@ The system uses a dual-backend approach:
   - ✓ Internet-based self-training capabilities
   - ✓ Improved detection accuracy with boundary constraints
   - ✓ Model management and version control system
+  - ✓ Comprehensive local installation guide (INSTALL.md) with OS-specific instructions
 
 ## Recent Performance
 - Backend API: ✓ Working (Node.js fallback active)

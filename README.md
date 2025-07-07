@@ -28,47 +28,34 @@ A full-stack AI-powered system for detecting and analyzing welding defects in ra
 - **Advanced Image Processing** with custom algorithms
 - **Multi-format Support** (JPEG, PNG)
 
-## Prerequisites
+## Quick Start
 
-Before installation, ensure you have the following installed:
+For detailed installation instructions, see **[INSTALL.md](INSTALL.md)**.
+
+### Prerequisites
 
 - **Node.js** (version 18 or higher)
-- **npm** (comes with Node.js)
 - **Python** (version 3.11 or higher)
-- **Git** (for cloning the repository)
+- **Git**
 
-## Local Installation
-
-### 1. Clone the Repository
+### Quick Installation
 
 ```bash
+# Clone the repository
 git clone <repository-url>
 cd ai-welding-defect-detection
-```
 
-### 2. Install Frontend Dependencies
-
-```bash
+# Install dependencies
 npm install
+pip install flask flask-cors pillow numpy python-multipart werkzeug
+
+# Start the application
+npm run dev
 ```
 
-### 3. Install Python Dependencies
+The application will be available at `http://localhost:5000`
 
-```bash
-cd backend
-pip install -r requirements.txt
-cd ..
-```
-
-### 4. Environment Setup
-
-Create a `.env` file in the root directory (optional):
-
-```env
-NODE_ENV=development
-PORT=5000
-PYTHON_BACKEND_PORT=8000
-```
+> **📖 Need help?** Check out the detailed [installation guide](INSTALL.md) with step-by-step instructions for Windows, macOS, and Linux.
 
 ## Running the Application
 
