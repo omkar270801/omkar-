@@ -8,6 +8,7 @@ import ProcessingModal from "@/components/processing-modal";
 import AdvancedSettings from "@/components/advanced-settings";
 import TrainingPanel from "@/components/training-panel";
 import type { AnalysisResponse } from "@shared/schema";
+import axios from "axios";
 
 export default function Home() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -45,6 +46,24 @@ export default function Home() {
     setIsProcessing(false);
   };
 
+  // Add handler for training image upload and backend trigger
+  const handleTrainModel = async (files: File[]) => {
+    if (!files || files.length === 0) return;
+    const formData = new FormData();
+    files.forEach((file, idx) => {
+      formData.append("images", file);
+    });
+    try {
+      // POST to backend training endpoint
+      await axios.post("/api/train", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      alert("Training started successfully!");
+    } catch (err) {
+      alert("Training failed. Please try again.");
+    }
+  };
+
   return (
     <div className="bg-background-light min-h-screen">
       {/* Header */}
@@ -52,18 +71,18 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                <Shield className="text-white w-5 h-5" />
+              <div className="flex items-center space-x-3">
+                <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-foreground">AI Welding Defect Detection</h1>
-                <p className="text-sm text-muted-foreground">Radiographic Analysis System</p>
+                <h1 className="text-xl font-semibold text-foreground">MDL WELDX</h1>
+                <p className="text-sm text-muted-foreground">(AI Welding X-Ray Defect detection System)</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
               <div className="text-sm text-muted-foreground flex items-center">
                 <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-                AI System Ready
+               AI Model 1.0
               </div>
               <Button 
                 variant="outline" 
@@ -73,14 +92,14 @@ export default function Home() {
                 <GraduationCap className="mr-2 w-4 h-4" />
                 Train Model
               </Button>
-              <Button 
+              {/* <Button 
                 variant="outline" 
                 className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
                 onClick={() => setShowAdvancedSettings(true)}
               >
                 <Cog className="mr-2 w-4 h-4" />
                 Advanced
-              </Button>
+              </Button> */}
             </div>
           </div>
         </div>
@@ -131,6 +150,7 @@ export default function Home() {
       <TrainingPanel
         isOpen={showTrainingPanel}
         onClose={() => setShowTrainingPanel(false)}
+        onTrainModel={handleTrainModel} // <-- pass handler as prop
       />
     </div>
   );

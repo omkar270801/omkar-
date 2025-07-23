@@ -34,9 +34,10 @@ interface DefectLabel {
 interface TrainingPanelProps {
   isOpen: boolean;
   onClose: () => void;
+  onTrainModel?: (files: File[]) => Promise<void>; // <-- add optional prop
 }
 
-export default function TrainingPanel({ isOpen, onClose }: TrainingPanelProps) {
+export default function TrainingPanel({ isOpen, onClose, onTrainModel }: TrainingPanelProps) {
   const [trainingImages, setTrainingImages] = useState<TrainingImage[]>([]);
   const [selectedImage, setSelectedImage] = useState<TrainingImage | null>(null);
   const [isLabeling, setIsLabeling] = useState(false);
@@ -51,12 +52,35 @@ export default function TrainingPanel({ isOpen, onClose }: TrainingPanelProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
 
+  // Store original File objects for upload
+  const [imageFiles, setImageFiles] = useState<{ [id: string]: File }>({});
+
+  // Remove image and its file from state
+  const handleRemoveImage = useCallback((id: string) => {
+    setTrainingImages(prev => prev.filter(img => img.id !== id));
+    setImageFiles(prev => {
+      const newFiles = { ...prev };
+      delete newFiles[id];
+      return newFiles;
+    });
+    if (selectedImage && selectedImage.id === id) {
+      setSelectedImage(null);
+      setIsLabeling(false);
+      setActiveTab("upload");
+    }
+    toast({
+      title: "Image removed",
+      description: "The image has been removed from the training dataset.",
+    });
+  }, [selectedImage, toast]);
+
   const handleFileUpload = useCallback((files: FileList) => {
+    const newFiles: { [id: string]: File } = {};
     Array.from(files).forEach(file => {
       if (file.type.startsWith('image/')) {
         const id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
         const url = URL.createObjectURL(file);
-        
+
         const newImage: TrainingImage = {
           id,
           filename: file.name,
@@ -64,7 +88,9 @@ export default function TrainingPanel({ isOpen, onClose }: TrainingPanelProps) {
           labels: [],
           uploaded: new Date()
         };
-        
+
+        newFiles[id] = file;
+
         setTrainingImages(prev => [...prev, newImage]);
         toast({
           title: "Image uploaded",
@@ -72,6 +98,7 @@ export default function TrainingPanel({ isOpen, onClose }: TrainingPanelProps) {
         });
       }
     });
+    setImageFiles(prev => ({ ...prev, ...newFiles }));
   }, [toast]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -143,32 +170,13 @@ export default function TrainingPanel({ isOpen, onClose }: TrainingPanelProps) {
     setTrainingProgress(0);
 
     try {
-      // Start training via API
-      const response = await fetch('/api/train-model', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          images: trainingImages.map(img => ({
-            filename: img.filename,
-            labels: img.labels.map(label => ({
-              type: label.type,
-              bbox: label.bbox
-            }))
-          }))
-        })
-      });
-
-      const result = await response.json();
-      
-      if (!result.success) {
-        throw new Error(result.message);
+      if (onTrainModel) {
+        // Only send files that are still in the dataset
+        const filesToSend = trainingImages
+          .map(img => imageFiles[img.id])
+          .filter(Boolean);
+        await onTrainModel(filesToSend as File[]);
       }
-
-      toast({
-        title: "Training started",
-        description: `Training initiated with ${trainingImages.length} images`,
-      });
-
       // Simulate progress updates
       const interval = setInterval(() => {
         setTrainingProgress(prev => {
@@ -184,13 +192,12 @@ export default function TrainingPanel({ isOpen, onClose }: TrainingPanelProps) {
           return prev + 1.5;
         });
       }, 300);
-
-    } catch (error) {
+    } catch (error: any) {
       setIsTraining(false);
       setTrainingProgress(0);
       toast({
         title: "Training failed",
-        description: error.message || "An error occurred during model training",
+        description: error?.message || "An error occurred during model training",
         variant: "destructive"
       });
     }
@@ -299,12 +306,12 @@ export default function TrainingPanel({ isOpen, onClose }: TrainingPanelProps) {
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="upload">Upload Images</TabsTrigger>
             <TabsTrigger value="label">Label Defects</TabsTrigger>
             <TabsTrigger value="dataset">Dataset Overview</TabsTrigger>
             <TabsTrigger value="train">Train Model</TabsTrigger>
-            <TabsTrigger value="internet">Internet Training</TabsTrigger>
+            {/* <TabsTrigger value="internet">Internet Training</TabsTrigger> */}
           </TabsList>
 
           <TabsContent value="upload" className="space-y-4">
@@ -369,9 +376,7 @@ export default function TrainingPanel({ isOpen, onClose }: TrainingPanelProps) {
                               size="sm"
                               variant="destructive"
                               className="w-6 h-6 p-0"
-                              onClick={() => setTrainingImages(prev => 
-                                prev.filter(img => img.id !== image.id)
-                              )}
+                              onClick={() => handleRemoveImage(image.id)}
                             >
                               <Trash2 className="w-3 h-3" />
                             </Button>

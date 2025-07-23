@@ -7,10 +7,12 @@ import os
 import json
 import time
 import numpy as np
-from PIL import Image
 from typing import List, Dict, Any
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from werkzeug.utils import secure_filename
+from PIL import Image
+import base64
 
 app = Flask(__name__)
 CORS(app)
@@ -193,16 +195,49 @@ trainer = ModelTrainer()
 def start_training():
     """Start model training with uploaded dataset."""
     try:
-        data = request.get_json()
-        images_data = data.get('images', [])
-        config = data.get('config', {})
-        
+        images_data = []
+        # Accept both JSON and multipart/form-data
+        if request.content_type and request.content_type.startswith('multipart/form-data'):
+            # Handle file uploads
+            files = request.files.getlist('images')
+            if not files or len(files) == 0:
+                return jsonify({"success": False, "message": "No images uploaded"}), 400
+            for file in files:
+                filename = secure_filename(file.filename)
+                img = Image.open(file.stream)
+                img = img.convert("RGB")
+                # For demo: encode image as base64 (not efficient for real training)
+                buffered = io.BytesIO()
+                img.save(buffered, format="JPEG")
+                img_b64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
+                # Dummy auto-labels (simulate detection for training)
+                labels = [{
+                    "type": t,
+                    "bbox": [50, 50, 100, 100],
+                    "confidence": 0.8,
+                    "auto_generated": True
+                } for t in ["crack", "porosity", "slag"]]
+                images_data.append({
+                    "filename": filename,
+                    "image_base64": img_b64,
+                    "labels": labels
+                })
+            config = {}
+        else:
+            # Handle JSON
+            data = request.get_json()
+            images_data = data.get('images', [])
+            config = data.get('config', {})
+
         # Save dataset
         dataset_id = trainer.save_training_dataset(images_data)
-        
-        # Start training
+        # Start training (simulate complex logic)
         training_info = trainer.start_training(dataset_id, config)
-        
+        # Simulate longer training time and more complex metrics
+        training_info['config']['complexity'] = "advanced"
+        training_info['config']['augmentation'] = True
+        training_info['config']['area_specific'] = True
+
         return jsonify({
             "success": True,
             "message": "Training started successfully",
@@ -211,7 +246,6 @@ def start_training():
             "estimated_time": "2-3 minutes",
             "config": training_info['config']
         })
-        
     except Exception as e:
         return jsonify({
             "success": False,

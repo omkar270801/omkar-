@@ -44,7 +44,7 @@ class YOLODetector:
         # Detect the actual radiographic content area (exclude dark borders)
         content_mask = self._detect_radiographic_content(gray)
         content_bounds = self._get_content_bounds(content_mask)
-        
+
         # Only process the actual X-ray content area
         if content_bounds:
             x_min, y_min, x_max, y_max = content_bounds
@@ -54,34 +54,38 @@ class YOLODetector:
             roi_gray = gray
             roi_size = image.size
             x_min, y_min = 0, 0
-            
+
         # Perform multiple detection algorithms on ROI only
         detections = []
-        
+
         # Detect cracks using edge detection and morphological operations
         crack_detections = self._detect_cracks(roi_gray, roi_size)
         detections.extend(crack_detections)
-        
+
         # Detect porosity using blob detection
         porosity_detections = self._detect_porosity(roi_gray, roi_size)
         detections.extend(porosity_detections)
-        
+
         # Detect slag inclusions using intensity analysis
         slag_detections = self._detect_slag_inclusions(roi_gray, roi_size)
         detections.extend(slag_detections)
-        
+
         # Adjust detection coordinates back to full image space
         if content_bounds:
             for detection in detections:
-                detection['bbox'][0] += x_min  # x coordinate
-                detection['bbox'][1] += y_min  # y coordinate
-        
+                if isinstance(detection['bbox'], dict):
+                    detection['bbox']['x'] += x_min
+                    detection['bbox']['y'] += y_min
+                elif isinstance(detection['bbox'], list):
+                    detection['bbox'][0] += x_min
+                    detection['bbox'][1] += y_min
+
         # Apply non-maximum suppression to remove overlapping detections
         filtered_detections = self._apply_nms(detections)
-        
+
         # Ensure all detections are within content boundaries
         filtered_detections = self._constrain_to_content_bounds(filtered_detections, image.size, content_bounds)
-        
+
         return filtered_detections
     
     def _detect_cracks(self, gray_image, image_size):

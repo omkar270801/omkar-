@@ -22,6 +22,7 @@ class SelfTrainingSystem:
         self.collected_data_dir = "collected_data"
         self.training_queue = []
         self.is_collecting = False
+        self.background_colour = (255, 255, 255)  # Default: white (RGB)
         
         os.makedirs(self.collected_data_dir, exist_ok=True)
     
@@ -239,6 +240,25 @@ class SelfTrainingSystem:
                 "collection_rate": len([item for item in self.training_queue if time.time() - item["collected_at"] < 3600]) # Last hour
             }
         }
+    
+    def set_background_colour(self, colour):
+        """
+        Set the background colour for image processing.
+        :param colour: Tuple (R, G, B) or string hex '#RRGGBB'
+        """
+        if isinstance(colour, str):
+            if colour.startswith("#") and len(colour) == 7:
+                self.background_colour = tuple(int(colour[i:i+2], 16) for i in (1, 3, 5))
+            else:
+                raise ValueError("Hex colour must be in format '#RRGGBB'")
+        elif isinstance(colour, tuple) and len(colour) == 3:
+            self.background_colour = colour
+        else:
+            raise ValueError("Colour must be RGB tuple or hex string")
+
+    def get_background_colour(self):
+        """Get the current background colour."""
+        return self.background_colour
 
 # Initialize self-training system
 self_trainer = SelfTrainingSystem()

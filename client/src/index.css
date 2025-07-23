@@ -1,3 +1,40 @@
+/* Add local Poppins font-face for offline support */
+@font-face {
+  font-family: 'Poppins';
+  src: url('/src/assets/fonts/Poppins-Regular.woff2') format('woff2'),
+       url('/src/assets/fonts/Poppins-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Poppins';
+  src: url('/src/assets/fonts/Poppins-Medium.woff2') format('woff2'),
+       url('/src/assets/fonts/Poppins-Medium.woff') format('woff');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Poppins';
+  src: url('/src/assets/fonts/Poppins-SemiBold.woff2') format('woff2'),
+       url('/src/assets/fonts/Poppins-SemiBold.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Poppins';
+  src: url('/src/assets/fonts/Poppins-Bold.woff2') format('woff2'),
+       url('/src/assets/fonts/Poppins-Bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* CDN fallback for Poppins */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -65,9 +102,17 @@
   }
 
   body {
+    /* Use local Poppins, fallback to CDN, then sans-serif */
+    font-family: 'Poppins', 'Poppins', sans-serif;
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+/* Optionally, set headings to Ubuntu if desired:
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Ubuntu', 'Poppins', sans-serif;
+}
+*/
 
 @layer components {
   .elevation-1 {
